@@ -2,7 +2,6 @@ Name:           harfbuzz
 Version:        0.9.3
 Release:        2.1
 License:        MIT
-# FIXME: graphite2 is not packaged / http://projects.palaso.org/projects/graphitedev
 Summary:        An OpenType text shaping engine
 Url:            http://www.freedesktop.org/wiki/Software/HarfBuzz
 Group:          Productivity/Text/Utilities
@@ -14,10 +13,8 @@ BuildRequires:  pkgconfig(cairo-ft)
 BuildRequires:  pkgconfig(freetype2) >= 2.3.8
 BuildRequires:  pkgconfig(glib-2.0) >= 2.16
 BuildRequires:  pkgconfig(gobject-2.0)
-#BuildRequires:  pkgconfig(graphite2)
 BuildRequires:  pkgconfig(gthread-2.0)
 BuildRequires:  pkgconfig(icu-uc)
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
 HarfBuzz is an OpenType text shaping engine.
