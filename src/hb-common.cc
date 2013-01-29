@@ -58,6 +58,15 @@ hb_tag_from_string (const char *s, int len)
   return HB_TAG_CHAR4 (tag);
 }
 
+void
+hb_tag_to_string (hb_tag_t tag, char *buf)
+{
+  buf[0] = (char) (uint8_t) (tag >> 24);
+  buf[1] = (char) (uint8_t) (tag >> 16);
+  buf[2] = (char) (uint8_t) (tag >>  8);
+  buf[3] = (char) (uint8_t) (tag >>  0);
+}
+
 
 /* hb_direction_t */
 
@@ -354,8 +363,7 @@ bool
 hb_user_data_array_t::set (hb_user_data_key_t *key,
 			   void *              data,
 			   hb_destroy_func_t   destroy,
-			   hb_bool_t           replace,
-			   hb_mutex_t         &lock)
+			   hb_bool_t           replace)
 {
   if (!key)
     return false;
@@ -373,18 +381,11 @@ hb_user_data_array_t::set (hb_user_data_key_t *key,
 }
 
 void *
-hb_user_data_array_t::get (hb_user_data_key_t *key,
-			   hb_mutex_t         &lock)
+hb_user_data_array_t::get (hb_user_data_key_t *key)
 {
   hb_user_data_item_t item = {NULL };
 
   return items.find (key, &item, lock) ? item.data : NULL;
-}
-
-void
-hb_user_data_array_t::finish (hb_mutex_t &lock)
-{
-  items.finish (lock);
 }
 
 

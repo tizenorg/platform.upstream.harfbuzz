@@ -2,6 +2,8 @@
 
 NULL =
 
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = src util test
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -10,6 +12,7 @@ pkgconfig_DATA = harfbuzz.pc
 EXTRA_DIST = \
 	autogen.sh \
 	harfbuzz.doap \
+	Android.mk \
 	$(NULL)
 
 MAINTAINERCLEANFILES = \
@@ -18,7 +21,6 @@ MAINTAINERCLEANFILES = \
 	$(srcdir)/autoscan.log \
 	$(srcdir)/compile \
 	$(srcdir)/config.guess \
-	$(srcdir)/config.h.in \
 	$(srcdir)/config.sub \
 	$(srcdir)/configure.scan \
 	$(srcdir)/depcomp \

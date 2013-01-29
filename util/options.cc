@@ -196,130 +196,6 @@ list_shapers (const char *name G_GNUC_UNUSED,
 }
 
 
-
-static void
-parse_space (char **pp)
-{
-  char c;
-#define ISSPACE(c) ((c)==' '||(c)=='\f'||(c)=='\n'||(c)=='\r'||(c)=='\t'||(c)=='\v')
-  while (c = **pp, ISSPACE (c))
-    (*pp)++;
-#undef ISSPACE
-}
-
-static hb_bool_t
-parse_char (char **pp, char c)
-{
-  parse_space (pp);
-
-  if (**pp != c)
-    return false;
-
-  (*pp)++;
-  return true;
-}
-
-static hb_bool_t
-parse_uint (char **pp, unsigned int *pv)
-{
-  char *p = *pp;
-  unsigned int v;
-
-  v = strtol (p, pp, 0);
-
-  if (p == *pp)
-    return false;
-
-  *pv = v;
-  return true;
-}
-
-
-static hb_bool_t
-parse_feature_value_prefix (char **pp, hb_feature_t *feature)
-{
-  if (parse_char (pp, '-'))
-    feature->value = 0;
-  else {
-    parse_char (pp, '+');
-    feature->value = 1;
-  }
-
-  return true;
-}
-
-static hb_bool_t
-parse_feature_tag (char **pp, hb_feature_t *feature)
-{
-  char *p = *pp, c;
-
-  parse_space (pp);
-
-#define ISALNUM(c) (('a' <= (c) && (c) <= 'z') || ('A' <= (c) && (c) <= 'Z') || ('0' <= (c) && (c) <= '9'))
-  while (c = **pp, ISALNUM(c))
-    (*pp)++;
-#undef ISALNUM
-
-  if (p == *pp)
-    return false;
-
-  feature->tag = hb_tag_from_string (p, *pp - p);
-  return true;
-}
-
-static hb_bool_t
-parse_feature_indices (char **pp, hb_feature_t *feature)
-{
-  parse_space (pp);
-
-  hb_bool_t has_start;
-
-  feature->start = 0;
-  feature->end = (unsigned int) -1;
-
-  if (!parse_char (pp, '['))
-    return true;
-
-  has_start = parse_uint (pp, &feature->start);
-
-  if (parse_char (pp, ':')) {
-    parse_uint (pp, &feature->end);
-  } else {
-    if (has_start)
-      feature->end = feature->start + 1;
-  }
-
-  return parse_char (pp, ']');
-}
-
-static hb_bool_t
-parse_feature_value_postfix (char **pp, hb_feature_t *feature)
-{
-  return !parse_char (pp, '=') || parse_uint (pp, &feature->value);
-}
-
-
-static hb_bool_t
-parse_one_feature (char **pp, hb_feature_t *feature)
-{
-  return parse_feature_value_prefix (pp, feature) &&
-	 parse_feature_tag (pp, feature) &&
-	 parse_feature_indices (pp, feature) &&
-	 parse_feature_value_postfix (pp, feature) &&
-	 (parse_char (pp, ',') || **pp == '\0');
-}
-
-static void
-skip_one_feature (char **pp)
-{
-  char *e;
-  e = strchr (*pp, ',');
-  if (e)
-    *pp = e + 1;
-  else
-    *pp = *pp + strlen (*pp);
-}
-
 static gboolean
 parse_features (const char *name G_GNUC_UNUSED,
 	        const char *arg,
@@ -351,11 +227,11 @@ parse_features (const char *name G_GNUC_UNUSED,
   /* now do the actual parsing */
   p = s;
   shape_opts->num_features = 0;
-  while (*p) {
-    if (parse_one_feature (&p, &shape_opts->features[shape_opts->num_features]))
+  while (p && *p) {
+    char *end = strchr (p, ',');
+    if (hb_feature_from_string (p, end ? end - p : -1, &shape_opts->features[shape_opts->num_features]))
       shape_opts->num_features++;
-    else
-      skip_one_feature (&p);
+    p = end ? end + 1 : NULL;
   }
 
   return true;
@@ -368,11 +244,11 @@ view_options_t::add_options (option_parser_t *parser)
   GOptionEntry entries[] =
   {
     {"annotate",	0, 0, G_OPTION_ARG_NONE,	&this->annotate,		"Annotate output rendering",				NULL},
-    {"background",	0, 0, G_OPTION_ARG_STRING,	&this->back,			"Set background color (default: "DEFAULT_BACK")",	"red/#rrggbb/#rrggbbaa"},
-    {"foreground",	0, 0, G_OPTION_ARG_STRING,	&this->fore,			"Set foreground color (default: "DEFAULT_FORE")",	"red/#rrggbb/#rrggbbaa"},
+    {"background",	0, 0, G_OPTION_ARG_STRING,	&this->back,			"Set background color (default: " DEFAULT_BACK ")",	"red/#rrggbb/#rrggbbaa"},
+    {"foreground",	0, 0, G_OPTION_ARG_STRING,	&this->fore,			"Set foreground color (default: " DEFAULT_FORE ")",	"red/#rrggbb/#rrggbbaa"},
     {"line-space",	0, 0, G_OPTION_ARG_DOUBLE,	&this->line_space,		"Set space between lines (default: 0)",			"units"},
-    {"margin",		0, 0, G_OPTION_ARG_CALLBACK,	(gpointer) &parse_margin,	"Margin around output (default: "G_STRINGIFY(DEFAULT_MARGIN)")","one to four numbers"},
-    {"font-size",	0, 0, G_OPTION_ARG_DOUBLE,	&this->font_size,		"Font size (default: "G_STRINGIFY(DEFAULT_FONT_SIZE)")","size"},
+    {"margin",		0, 0, G_OPTION_ARG_CALLBACK,	(gpointer) &parse_margin,	"Margin around output (default: " G_STRINGIFY(DEFAULT_MARGIN) ")","one to four numbers"},
+    {"font-size",	0, 0, G_OPTION_ARG_DOUBLE,	&this->font_size,		"Font size (default: " G_STRINGIFY(DEFAULT_FONT_SIZE) ")","size"},
     {NULL}
   };
   parser->add_group (entries,
@@ -395,6 +271,9 @@ shape_options_t::add_options (option_parser_t *parser)
     {"direction",	0, 0, G_OPTION_ARG_STRING,	&this->direction,		"Set text direction (default: auto)",	"ltr/rtl/ttb/btt"},
     {"language",	0, 0, G_OPTION_ARG_STRING,	&this->language,		"Set text language (default: $LANG)",	"langstr"},
     {"script",		0, 0, G_OPTION_ARG_STRING,	&this->script,			"Set text script (default: auto)",	"ISO-15924 tag"},
+    {"bot",		0, 0, G_OPTION_ARG_NONE,	&this->bot,			"Treat text as beginning-of-paragraph",	NULL},
+    {"eot",		0, 0, G_OPTION_ARG_NONE,	&this->eot,			"Treat text as end-of-paragraph",	NULL},
+    {"preserve-default-ignorables",0, 0, G_OPTION_ARG_NONE,	&this->preserve_default_ignorables,	"Preserve Default-Ignorable characters",	NULL},
     {"utf8-clusters",	0, 0, G_OPTION_ARG_NONE,	&this->utf8_clusters,		"Use UTF8 byte indices, not char indices",	NULL},
     {"normalize-glyphs",0, 0, G_OPTION_ARG_NONE,	&this->normalize_glyphs,	"Rearrange glyph clusters in nominal order",	NULL},
     {NULL}
@@ -437,7 +316,7 @@ shape_options_t::add_options (option_parser_t *parser)
     "\n"
     "    Mixing it all:\n"
     "\n"
-    "      \"kern[3:5]=0\" 1         3         5         # Turn feature off for range";
+    "      \"aalt[3:5]=2\" 2         3         5         # Turn 2nd alternate on for range";
 
   GOptionEntry entries2[] =
   {
@@ -473,7 +352,9 @@ text_options_t::add_options (option_parser_t *parser)
   GOptionEntry entries[] =
   {
     {"text",		0, 0, G_OPTION_ARG_STRING,	&this->text,			"Set input text",			"string"},
-    {"text-file",	0, 0, G_OPTION_ARG_STRING,	&this->text_file,		"Set input text file-name\n\n    If no text is provided, standard input is used for input.",		"filename"},
+    {"text-file",	0, 0, G_OPTION_ARG_STRING,	&this->text_file,		"Set input text file-name\n\n    If no text is provided, standard input is used for input.\n",		"filename"},
+    {"text-before",	0, 0, G_OPTION_ARG_STRING,	&this->text_before,		"Set text context before each line",	"string"},
+    {"text-after",	0, 0, G_OPTION_ARG_STRING,	&this->text_after,		"Set text context after each line",	"string"},
     {NULL}
   };
   parser->add_group (entries,
@@ -486,10 +367,17 @@ text_options_t::add_options (option_parser_t *parser)
 void
 output_options_t::add_options (option_parser_t *parser)
 {
+  const char *text;
+
+  if (NULL == supported_formats)
+    text = "Set output format";
+  else
+    text = g_strdup_printf ("Set output format\n\n    Supported formats are: %s", supported_formats);
+
   GOptionEntry entries[] =
   {
     {"output-file",	0, 0, G_OPTION_ARG_STRING,	&this->output_file,		"Set output file-name (default: stdout)","filename"},
-    {"output-format",	0, 0, G_OPTION_ARG_STRING,	&this->output_format,		"Set output format",			"format"},
+    {"output-format",	0, 0, G_OPTION_ARG_STRING,	&this->output_format,		text,					"format"},
     {NULL}
   };
   parser->add_group (entries,
@@ -734,45 +622,23 @@ format_options_t::serialize_unicode (hb_buffer_t *buffer,
 void
 format_options_t::serialize_glyphs (hb_buffer_t *buffer,
 				    hb_font_t   *font,
-				    hb_bool_t    utf8_clusters,
+				    hb_buffer_serialize_format_t output_format,
+				    hb_buffer_serialize_flags_t flags,
 				    GString     *gs)
 {
-  unsigned int num_glyphs = hb_buffer_get_length (buffer);
-  hb_glyph_info_t *info = hb_buffer_get_glyph_infos (buffer, NULL);
-  hb_glyph_position_t *pos = hb_buffer_get_glyph_positions (buffer, NULL);
-
   g_string_append_c (gs, '[');
-  for (unsigned int i = 0; i < num_glyphs; i++)
-  {
-    if (i)
-      g_string_append_c (gs, '|');
+  unsigned int num_glyphs = hb_buffer_get_length (buffer);
+  unsigned int start = 0;
 
-    char glyph_name[128];
-    if (show_glyph_names) {
-      hb_font_glyph_to_string (font, info->codepoint, glyph_name, sizeof (glyph_name));
-      g_string_append_printf (gs, "%s", glyph_name);
-    } else
-      g_string_append_printf (gs, "%u", info->codepoint);
-
-    if (show_clusters) {
-      g_string_append_printf (gs, "=%u", info->cluster);
-      if (utf8_clusters)
-	g_string_append (gs, "u8");
-    }
-
-    if (show_positions && (pos->x_offset || pos->y_offset)) {
-      g_string_append_c (gs, '@');
-      if (pos->x_offset) g_string_append_printf (gs, "%d", pos->x_offset);
-      if (pos->y_offset) g_string_append_printf (gs, ",%d", pos->y_offset);
-    }
-    if (show_positions && (pos->x_advance || pos->y_advance)) {
-      g_string_append_c (gs, '+');
-      if (pos->x_advance) g_string_append_printf (gs, "%d", pos->x_advance);
-      if (pos->y_advance) g_string_append_printf (gs, ",%d", pos->y_advance);
-    }
-
-    info++;
-    pos++;
+  while (start < num_glyphs) {
+    char buf[1024];
+    unsigned int consumed;
+    start += hb_buffer_serialize_glyphs (buffer, start, num_glyphs,
+					 buf, sizeof (buf), &consumed,
+					 font, output_format, flags);
+    if (!consumed)
+      break;
+    g_string_append (gs, buf);
   }
   g_string_append_c (gs, ']');
 }
@@ -789,7 +655,6 @@ format_options_t::serialize_buffer_of_text (hb_buffer_t  *buffer,
 					    const char   *text,
 					    unsigned int  text_len,
 					    hb_font_t    *font,
-					    hb_bool_t     utf8_clusters,
 					    GString      *gs)
 {
   if (show_text) {
@@ -821,10 +686,11 @@ format_options_t::serialize_buffer_of_glyphs (hb_buffer_t  *buffer,
 					      const char   *text,
 					      unsigned int  text_len,
 					      hb_font_t    *font,
-					      hb_bool_t     utf8_clusters,
+					      hb_buffer_serialize_format_t output_format,
+					      hb_buffer_serialize_flags_t format_flags,
 					      GString      *gs)
 {
   serialize_line_no (line_no, gs);
-  serialize_glyphs (buffer, font, utf8_clusters, gs);
+  serialize_glyphs (buffer, font, output_format, format_flags, gs);
   g_string_append_c (gs, '\n');
 }

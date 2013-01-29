@@ -1,16 +1,20 @@
 General fixes:
 =============
 
-- Ligature matching and match_input() of (Chain)Context should use the
-  same logic.  Right now the Ligature logic is more involved.  Possibly
-  merge, or duplicate.
+- AAT 'morx' implementation.
+
+- Return "safe-to-break" bit from shaping.
+
+- Disable 'vert' if 'vrt2' is available (eg. Motoya fonts with arrow chars).
+
+- Fix TT 'kern' on/off and GPOS interaction (move kerning before GPOS).
+
+- Implement 'rand' feature.
 
 - mask propagation? (when ligation, "or" the masks).
 
 - Warn at compile time (and runtime with HB_DEBUG?) if no Unicode / font
   funcs found / set.
-
-- Fix TT 'kern' on/off and GPOS interaction (move kerning before GPOS).
 
 - Do proper rounding when scaling from font space?  May be a non-issue.
 
@@ -19,15 +23,11 @@ General fixes:
   * vkna,hkna etc for kana, etc
   * smpl,trad for ZHS / ZHT
 
-- Add Pango backend?
-
-- Add ICUlayout backend?
-
-- Add ICUlayout API?
-
 
 API issues to fix before 1.0:
 ============================
+
+- API to accept a list of languages.
 
 - Add default font_funcs / Unicode funcs API and to utils.
 
@@ -49,23 +49,15 @@ API additions
 
 - Buffer (de)serialize API ala hb-shape?
 
-- Move feature parsing from util into the library
-
 - Add hb-cairo glue
 
 - Add sanitize API (and a cached version, that saves result on blob user-data)
 
 - Add glib GBoxedType stuff and introspection
 
-- Finish Uniscribe / CoreText face / font get API
-
 - BCP 47 language handling / API (language_matches?)
 
-- Add hb_face_get_glyph_count()?
-
 - Add hb_font_create_linear()?
-
-- Add hb_shape_plan()/hb_shape_planned()
 
 - Add query API for aalt-like features?
 
@@ -79,10 +71,7 @@ API additions
 hb-view / hb-shape enhancements:
 ===============================
 
-- --output-format should list available formats.
 - Add --width, --height, --auto-size, --align, etc?
-- Add XML and JSON formats to hb-shape
-- --features="init=medi=isol=fina=0"
 
 
 Tests to write:
@@ -96,6 +85,7 @@ Tests to write:
 
 - GObject, FreeType, etc
 
-- hb_set_t
-
 - hb_cache_t and relatives
+
+- hb_feature_to/from_string
+- hb_buffer_[sg]et_contents
