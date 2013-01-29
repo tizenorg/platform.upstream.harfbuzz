@@ -1,6 +1,6 @@
 Name:           harfbuzz
-Version:        0.9.3
-Release:        2.1
+Version:        0.9.12
+Release:        0
 License:        MIT
 Summary:        An OpenType text shaping engine
 Url:            http://www.freedesktop.org/wiki/Software/HarfBuzz
@@ -58,7 +58,7 @@ make %{?_smp_mflags}
 
 %files -n libharfbuzz
 %defattr(-,root,root)
-%doc COPYING
+%license COPYING
 %{_libdir}/libharfbuzz.so.0*
 
 %files tools
