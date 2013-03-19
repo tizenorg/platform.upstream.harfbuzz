@@ -4,7 +4,7 @@ Release:        0
 License:        MIT
 Summary:        An OpenType text shaping engine
 Url:            http://www.freedesktop.org/wiki/Software/HarfBuzz
-Group:          Productivity/Text/Utilities
+Group:          Graphics/Font Management
 Source:         %{name}-%{version}.tar.bz2
 Source99:       baselibs.conf
 BuildRequires:  gcc-c++
@@ -21,21 +21,21 @@ HarfBuzz is an OpenType text shaping engine.
 
 %package -n libharfbuzz
 Summary:        An OpenType text shaping engine
-Group:          System/Libraries
+Group:          Graphics/Font Management
 
 %description -n libharfbuzz
 HarfBuzz is an OpenType text shaping engine.
 
 %package tools
 Summary:        An OpenType text shaping engine -- Tools
-Group:          Productivity/Text/Utilities
+Group:          Graphics/Font Management
 
 %description tools
 HarfBuzz is an OpenType text shaping engine.
 
 %package devel
 Summary:        An OpenType text shaping engine -- Development Files
-Group:          Development/Libraries/C and C++
+Group:          Development/Libraries
 Requires:       libharfbuzz = %{version}
 
 %description devel
