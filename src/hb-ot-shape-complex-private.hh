@@ -39,13 +39,29 @@
 #define complex_var_u8_1()	var2.u8[3]
 
 
+enum hb_ot_shape_zero_width_marks_type_t {
+  HB_OT_SHAPE_ZERO_WIDTH_MARKS_NONE,
+//  HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_UNICODE_EARLY,
+  HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_UNICODE_LATE,
+  HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_GDEF_EARLY,
+  HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_GDEF_LATE,
+
+  HB_OT_SHAPE_ZERO_WIDTH_MARKS_DEFAULT = HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_UNICODE_LATE
+};
+
 
 /* Master OT shaper list */
 #define HB_COMPLEX_SHAPERS_IMPLEMENT_SHAPERS \
   HB_COMPLEX_SHAPER_IMPLEMENT (default) /* should be first */ \
   HB_COMPLEX_SHAPER_IMPLEMENT (arabic) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (hangul) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (hebrew) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (myanmar_old) \
   HB_COMPLEX_SHAPER_IMPLEMENT (indic) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (myanmar) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (sea) \
   HB_COMPLEX_SHAPER_IMPLEMENT (thai) \
+  HB_COMPLEX_SHAPER_IMPLEMENT (tibetan) \
   /* ^--- Add new shapers here */
 
 
@@ -95,12 +111,7 @@ struct hb_ot_complex_shaper_t
 			   hb_font_t                *font);
 
 
-  /* normalization_preference()
-   * Called during shape().
-   * May be NULL.
-   */
-  hb_ot_shape_normalization_mode_t
-  (*normalization_preference) (const hb_segment_properties_t *props);
+  hb_ot_shape_normalization_mode_t normalization_preference;
 
   /* decompose()
    * Called during shape()'s normalization.
@@ -130,7 +141,8 @@ struct hb_ot_complex_shaper_t
 		       hb_buffer_t              *buffer,
 		       hb_font_t                *font);
 
-  bool zero_width_attached_marks;
+  hb_ot_shape_zero_width_marks_type_t zero_width_marks;
+
   bool fallback_position;
 };
 
@@ -150,6 +162,8 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 
     /* Unicode-1.1 additions */
     case HB_SCRIPT_ARABIC:
+
+    /* Unicode-3.0 additions */
     case HB_SCRIPT_MONGOLIAN:
     case HB_SCRIPT_SYRIAC:
 
@@ -159,6 +173,10 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 
     /* Unicode-6.0 additions */
     case HB_SCRIPT_MANDAIC:
+
+    /* Unicode-7.0 additions */
+    case HB_SCRIPT_MANICHAEAN:
+    case HB_SCRIPT_PSALTER_PAHLAVI:
 
       /* For Arabic script, use the Arabic shaper even if no OT script tag was found.
        * This is because we do fallback shaping for Arabic script (and not others). */
@@ -175,6 +193,23 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 
       return &_hb_ot_complex_shaper_thai;
 
+
+    /* Unicode-1.1 additions */
+    case HB_SCRIPT_HANGUL:
+
+      return &_hb_ot_complex_shaper_hangul;
+
+
+    /* Unicode-2.0 additions */
+    case HB_SCRIPT_TIBETAN:
+
+      return &_hb_ot_complex_shaper_tibetan;
+
+
+    /* Unicode-1.1 additions */
+    case HB_SCRIPT_HEBREW:
+
+      return &_hb_ot_complex_shaper_hebrew;
 
 
     /* ^--- Add new shapers here */
@@ -214,9 +249,6 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     case HB_SCRIPT_LAO:
     case HB_SCRIPT_THAI:
 
-    /* Unicode-2.0 additions */
-    case HB_SCRIPT_TIBETAN:
-
     /* Unicode-3.2 additions */
     case HB_SCRIPT_TAGALOG:
     case HB_SCRIPT_TAGBANWA:
@@ -252,15 +284,10 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     /* Unicode-3.0 additions */
     case HB_SCRIPT_SINHALA:
 
-    /* Unicode-4.1 additions */
-    case HB_SCRIPT_BUGINESE:
-    case HB_SCRIPT_NEW_TAI_LUE:
-
     /* Unicode-5.0 additions */
     case HB_SCRIPT_BALINESE:
 
     /* Unicode-5.1 additions */
-    case HB_SCRIPT_CHAM:
     case HB_SCRIPT_LEPCHA:
     case HB_SCRIPT_REJANG:
     case HB_SCRIPT_SUNDANESE:
@@ -269,19 +296,22 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     case HB_SCRIPT_JAVANESE:
     case HB_SCRIPT_KAITHI:
     case HB_SCRIPT_MEETEI_MAYEK:
-    case HB_SCRIPT_TAI_THAM:
 
+    /* Unicode-6.0 additions */
 
     /* Unicode-6.1 additions */
     case HB_SCRIPT_CHAKMA:
     case HB_SCRIPT_SHARADA:
     case HB_SCRIPT_TAKRI:
 
-      /* Only use Indic shaper if the font has Indic tables. */
-      if (planner->map.found_script[0])
-	return &_hb_ot_complex_shaper_indic;
-      else
+      /* If the designer designed the font for the 'DFLT' script,
+       * use the default shaper.  Otherwise, use the Indic shaper.
+       * Note that for some simple scripts, there may not be *any*
+       * GSUB/GPOS needed, so there may be no scripts found! */
+      if (planner->map.chosen_script[0] == HB_TAG ('D','F','L','T'))
 	return &_hb_ot_complex_shaper_default;
+      else
+	return &_hb_ot_complex_shaper_indic;
 
     case HB_SCRIPT_KHMER:
       /* A number of Khmer fonts in the wild don't have a 'pref' feature,
@@ -300,12 +330,31 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 	return &_hb_ot_complex_shaper_default;
 
     case HB_SCRIPT_MYANMAR:
-      /* For Myanmar, we only want to use the Indic shaper if the "new" script
-       * tag is found.  For "old" script tag we want to use the default shaper. */
       if (planner->map.chosen_script[0] == HB_TAG ('m','y','m','2'))
-	return &_hb_ot_complex_shaper_indic;
+	return &_hb_ot_complex_shaper_myanmar;
+      else if (planner->map.chosen_script[0] == HB_TAG ('m','y','m','r'))
+	return &_hb_ot_complex_shaper_myanmar_old;
       else
 	return &_hb_ot_complex_shaper_default;
+
+    /* Unicode-4.1 additions */
+    case HB_SCRIPT_BUGINESE:
+    case HB_SCRIPT_NEW_TAI_LUE:
+
+    /* Unicode-5.1 additions */
+    case HB_SCRIPT_CHAM:
+
+    /* Unicode-5.2 additions */
+    case HB_SCRIPT_TAI_THAM:
+
+      /* If the designer designed the font for the 'DFLT' script,
+       * use the default shaper.  Otherwise, use the Indic shaper.
+       * Note that for some simple scripts, there may not be *any*
+       * GSUB/GPOS needed, so there may be no scripts found! */
+      if (planner->map.chosen_script[0] == HB_TAG ('D','F','L','T'))
+	return &_hb_ot_complex_shaper_default;
+      else
+	return &_hb_ot_complex_shaper_sea;
   }
 }
 
