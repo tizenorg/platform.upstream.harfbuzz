@@ -1,5 +1,5 @@
 Name:           harfbuzz
-Version:        0.9.12
+Version:        0.9.35
 Release:        0
 License:        MIT
 Summary:        An OpenType text shaping engine
@@ -53,6 +53,7 @@ make %{?_smp_mflags}
 
 %install
 %make_install
+rm -rf %{buildroot}/%{_datadir}/gtk-doc
 
 %post -n libharfbuzz -p /sbin/ldconfig
 
@@ -62,7 +63,7 @@ make %{?_smp_mflags}
 %manifest %{name}.manifest
 %defattr(-,root,root)
 %license COPYING
-%{_libdir}/libharfbuzz.so.0*
+%{_libdir}/*.so.0*
 
 %files tools
 %manifest %{name}.manifest
@@ -76,4 +77,4 @@ make %{?_smp_mflags}
 %defattr(-,root,root)
 %{_includedir}/harfbuzz/
 %{_libdir}/*.so
-%{_libdir}/pkgconfig/harfbuzz.pc
+%{_libdir}/pkgconfig/*.pc
