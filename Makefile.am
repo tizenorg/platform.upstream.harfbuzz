@@ -10,6 +10,7 @@ EXTRA_DIST = \
 	autogen.sh \
 	harfbuzz.doap \
 	Android.mk \
+	README.python \
 	$(NULL)
 
 MAINTAINERCLEANFILES = \
@@ -18,6 +19,7 @@ MAINTAINERCLEANFILES = \
 	$(GITIGNORE_MAINTAINERCLEANFILES_MAKEFILE_IN) \
 	$(srcdir)/INSTALL \
 	$(srcdir)/ChangeLog \
+	$(srcdir)/gtk-doc.make \
 	$(NULL)
 
 
