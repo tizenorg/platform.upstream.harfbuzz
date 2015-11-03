@@ -207,7 +207,7 @@ struct arabic_fallback_plan_t
 
 static const arabic_fallback_plan_t arabic_fallback_plan_nil = {};
 
-#if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(HB_WITH_WIN1256)
+#if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(HB_NO_WIN1256)
 #define HB_WITH_WIN1256
 #endif
 
@@ -327,7 +327,7 @@ arabic_fallback_plan_destroy (arabic_fallback_plan_t *fallback_plan)
   for (unsigned int i = 0; i < fallback_plan->num_lookups; i++)
     if (fallback_plan->lookup_array[i])
     {
-      fallback_plan->accel_array[i].fini (fallback_plan->lookup_array[i]);
+      fallback_plan->accel_array[i].fini ();
       if (fallback_plan->free_lookups)
 	free (fallback_plan->lookup_array[i]);
     }

@@ -861,11 +861,7 @@ top_srcdir = @top_srcdir@
 NULL = 
 SUBDIRS = $(am__append_26)
 DIST_SUBDIRS = hb-ucdn
-BUILT_SOURCES = $(am__append_37) hb-buffer-deserialize-json.hh \
-	hb-buffer-deserialize-text.hh \
-	hb-ot-shape-complex-indic-machine.hh \
-	hb-ot-shape-complex-myanmar-machine.hh \
-	hb-ot-shape-complex-sea-machine.hh $(NULL)
+BUILT_SOURCES = $(am__append_37) $(RAGEL_GENERATED)
 EXTRA_DIST = harfbuzz.pc.in harfbuzz-icu.pc.in harfbuzz-gobject.pc.in \
 	hb-gobject-enums.cc.tmpl hb-gobject-enums.h.tmpl $(NULL) \
 	$(GENERATORS) hb-buffer-deserialize-json.rl \
@@ -875,11 +871,8 @@ EXTRA_DIST = harfbuzz.pc.in harfbuzz-icu.pc.in harfbuzz-gobject.pc.in \
 	hb-ot-shape-complex-sea-machine.rl $(NULL)
 CLEANFILES = $(pkgconfig_DATA) harfbuzz.def $(am__append_39)
 DISTCLEANFILES = $(am__append_38)
-MAINTAINERCLEANFILES = 
+MAINTAINERCLEANFILES = $(RAGEL_GENERATED)
 DISTCHECK_CONFIGURE_FLAGS = --enable-introspection
-
-# The following warning options are useful for debugging: -Wpadded
-#AM_CXXFLAGS =
 lib_LTLIBRARIES = libharfbuzz.la $(am__append_30) $(am__append_33)
 HBCFLAGS = $(am__append_4) $(am__append_6) $(am__append_10) \
 	$(am__append_14) $(am__append_18) $(am__append_22) \
@@ -941,6 +934,14 @@ pkgconfig_DATA = harfbuzz.pc $(am__append_32) $(am__append_36)
 GENERATORS = \
 	gen-arabic-table.py \
 	gen-indic-table.py \
+	$(NULL)
+
+RAGEL_GENERATED = \
+	$(srcdir)/hb-buffer-deserialize-json.hh \
+	$(srcdir)/hb-buffer-deserialize-text.hh \
+	$(srcdir)/hb-ot-shape-complex-indic-machine.hh \
+	$(srcdir)/hb-ot-shape-complex-myanmar-machine.hh \
+	$(srcdir)/hb-ot-shape-complex-sea-machine.hh \
 	$(NULL)
 
 main_SOURCES = main.cc
@@ -1014,7 +1015,7 @@ all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .cc .hh .lo .log .o .obj .rl .test .test$(EXEEXT) .trs
+.SUFFIXES: .cc .lo .log .o .obj .test .test$(EXEEXT) .trs
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -2223,12 +2224,18 @@ uninstall-am: uninstall-binPROGRAMS uninstall-girDATA \
 	uninstall-pkgconfigDATA uninstall-pkgincludeHEADERS \
 	uninstall-typelibDATA
 
+
+# The following warning options are useful for debugging: -Wpadded
+#AM_CXXFLAGS =
+
+# Convenience targets:
+lib: libharfbuzz.la
 @HAVE_GOBJECT_TRUE@hb-gobject-enums.%: hb-gobject-enums.%.tmpl $(HBHEADERS)
 @HAVE_GOBJECT_TRUE@	$(AM_V_GEN) $(GLIB_MKENUMS) \
 @HAVE_GOBJECT_TRUE@		--identifier-prefix hb_ --symbol-prefix hb_gobject \
 @HAVE_GOBJECT_TRUE@		--template $^ | \
-@HAVE_GOBJECT_TRUE@	sed 's/_t_get_type/_get_type/g; s/_T (/ (/g' > "$@.tmp" && \
-@HAVE_GOBJECT_TRUE@	mv "$@.tmp" "$@" || ( $(RM) "@.tmp" && false )
+@HAVE_GOBJECT_TRUE@	sed 's/_t_get_type/_get_type/g; s/_T (/ (/g' > "$@" \
+@HAVE_GOBJECT_TRUE@	|| ($(RM) "$@"; false)
 
 %.pc: %.pc.in $(top_builddir)/config.status
 	$(AM_V_GEN) \
@@ -2237,8 +2244,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-girDATA \
 		-e 's@%libdir%@$(libdir)@g' \
 		-e 's@%includedir%@$(includedir)@g' \
 		-e 's@%VERSION%@$(VERSION)@g' \
-	"$<" \
-	> "$@.tmp" && mv "$@.tmp" "$@" || ( $(RM) "$@.tmp"; false )
+	"$<" > "$@" \
+	|| ($(RM) "$@"; false)
 harfbuzz.def: $(HBHEADERS) $(HBNODISTHEADERS)
 	$(AM_V_GEN) (echo EXPORTS; \
 	(cat $^ || echo 'hb_ERROR ()' ) | \
@@ -2246,27 +2253,26 @@ harfbuzz.def: $(HBHEADERS) $(HBNODISTHEADERS)
 	sed -e 's/ (.*//' | \
 	LANG=C sort; \
 	echo LIBRARY libharfbuzz-$(HB_VERSION_MAJOR).dll; \
-	) >"$@.tmp"
-	@ ! grep -q hb_ERROR "$@.tmp" && mv "$@.tmp" "$@" || ($(RM) "$@"; false)
+	) >"$@"
+	@ ! grep -q hb_ERROR "$@" \
+	|| ($(RM) "$@"; false)
 
 unicode-tables: arabic-table indic-table
 
 indic-table: gen-indic-table.py IndicSyllabicCategory.txt IndicMatraCategory.txt Blocks.txt
-	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-indic-table.cc.tmp && \
-	mv hb-ot-shape-complex-indic-table.cc.tmp $(srcdir)/hb-ot-shape-complex-indic-table.cc || \
-	($(RM) hb-ot-shape-complex-indic-table.cc.tmp; false)
+	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-indic-table.cc \
+	|| ($(RM) hb-ot-shape-complex-indic-table.cc; false)
 
 arabic-table: gen-arabic-table.py ArabicShaping.txt UnicodeData.txt Blocks.txt
-	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-arabic-table.hh.tmp && \
-	mv hb-ot-shape-complex-arabic-table.hh.tmp $(srcdir)/hb-ot-shape-complex-arabic-table.hh || \
-	($(RM) hb-ot-shape-complex-arabic-table.hh.tmp; false)
+	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-arabic-table.hh \
+	|| ($(RM) hb-ot-shape-complex-arabic-table.hh; false)
 
 built-sources: $(BUILT_SOURCES)
 
 .PHONY: unicode-tables arabic-table indic-table built-sources
-.rl.hh:
-	$(AM_V_GEN)$(RAGEL) -e -F1 -o "$@.tmp" "$<" && \
-	mv "$@.tmp" "$@" || ( $(RM) "$@.tmp" && false )
+$(srcdir)/%.hh: $(srcdir)/%.rl
+	$(AM_V_GEN)(cd $(srcdir) && $(RAGEL) -e -F1 -o "$*.hh" "$*.rl") \
+	|| ($(RM) "$@"; false)
 
 @HAVE_INTROSPECTION_TRUE@-include $(INTROSPECTION_MAKEFILE)
 

@@ -156,7 +156,7 @@
     <keyword type="struct" name="hb_glyph_info_t" link="harfbuzz-hb-buffer.html#hb-glyph-info-t-struct"/>
     <keyword type="struct" name="hb_glyph_position_t" link="harfbuzz-hb-buffer.html#hb-glyph-position-t-struct"/>
     <keyword type="struct" name="hb_segment_properties_t" link="harfbuzz-hb-buffer.html#hb-segment-properties-t-struct"/>
-    <keyword type="function" name="hb_blob_create ()" link="harfbuzz-hb-blob.html#hb-blob-create"/>
+    <keyword type="function" name="hb_blob_create ()" link="harfbuzz-hb-blob.html#hb-blob-create" since="1.0"/>
     <keyword type="function" name="hb_blob_create_sub_blob ()" link="harfbuzz-hb-blob.html#hb-blob-create-sub-blob" since="1.0"/>
     <keyword type="function" name="hb_blob_destroy ()" link="harfbuzz-hb-blob.html#hb-blob-destroy" since="1.0"/>
     <keyword type="function" name="hb_blob_get_data ()" link="harfbuzz-hb-blob.html#hb-blob-get-data" since="1.0"/>
