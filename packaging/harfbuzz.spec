@@ -9,8 +9,8 @@ Source:         %{name}-%{version}.tar.bz2
 Source99:       baselibs.conf
 Source1001: 	harfbuzz.manifest
 BuildRequires:  gcc-c++
-BuildRequires:  pkgconfig(cairo) >= 1.8.0
-BuildRequires:  pkgconfig(cairo-ft)
+#BuildRequires:  pkgconfig(cairo) >= 1.8.0
+#BuildRequires:  pkgconfig(cairo-ft)
 BuildRequires:  pkgconfig(freetype2) >= 2.3.8
 BuildRequires:  pkgconfig(glib-2.0) >= 2.16
 BuildRequires:  pkgconfig(gobject-2.0)
@@ -70,7 +70,7 @@ rm -rf %{buildroot}/%{_datadir}/gtk-doc
 %defattr(-,root,root)
 %{_bindir}/hb-ot-shape-closure
 %{_bindir}/hb-shape
-%{_bindir}/hb-view
+#%{_bindir}/hb-view
 
 %files devel
 %manifest %{name}.manifest
